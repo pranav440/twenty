@@ -3,7 +3,20 @@ import { OnboardingFreeCreditsProgressBar } from '@/onboarding/components/free-c
 import { StyledOnboardingFreeCreditsCount } from '@/onboarding/components/free-credits/StyledOnboardingFreeCreditsCount';
 import { StyledOnboardingFreeCreditsLabel } from '@/onboarding/components/free-credits/StyledOnboardingFreeCreditsLabel';
 import { StyledOnboardingFreeCreditsText } from '@/onboarding/components/free-credits/StyledOnboardingFreeCreditsText';
+import { styled } from '@linaria/react';
 import { plural } from '@lingui/core/macro';
+import { MOBILE_VIEWPORT } from 'twenty-ui/theme';
+
+const StyledProgressLabel = styled(StyledOnboardingFreeCreditsLabel)`
+  @media (max-width: ${MOBILE_VIEWPORT}px) {
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+`;
 
 type OnboardingFreeCreditsProgressProps = {
   earnedCredits: number;
@@ -40,12 +53,12 @@ export const OnboardingFreeCreditsProgress = ({
           /
           <OnboardingFreeCreditsAnimatedCount credits={goalCredits} />
         </StyledOnboardingFreeCreditsCount>
-        <StyledOnboardingFreeCreditsLabel>
+        <StyledProgressLabel>
           {plural(goalCredits, {
             one: 'free credit',
             other: 'free credits',
           })}
-        </StyledOnboardingFreeCreditsLabel>
+        </StyledProgressLabel>
       </StyledOnboardingFreeCreditsText>
     </>
   );
