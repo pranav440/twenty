@@ -25,7 +25,7 @@
 
 </ParamField>
 
-<ParamField body="Root.onOpenChange" type="((open: boolean) =&gt; void)">
+<ParamField body="Root.onOpenChange" type="((open: boolean, eventDetails: DropdownOpenChangeDetails) =&gt; void)">
 
 </ParamField>
 
@@ -109,6 +109,11 @@
 <ParamField body="Content.className" type="string | ((state: PopoverPopupState) =&gt; string | undefined)">
   CSS class applied to the element, or a function that
   returns a class based on the component's state.
+</ParamField>
+
+<ParamField body="Content.collisionPadding" type="Padding">
+  Space in pixels kept between the popup and the edges of its collision
+  boundary, for all sides or per side. Defaults to 5.
 </ParamField>
 
 <ParamField body="Content.container" type="HTMLElement | ShadowRoot | RefObject&lt;HTMLElement | ShadowRoot | null&gt; | null">
@@ -464,7 +469,7 @@
 
 </ParamField>
 
-<ParamField body="Submenu.onOpenChange" type="((open: boolean) =&gt; void)">
+<ParamField body="Submenu.onOpenChange" type="((open: boolean, eventDetails: DropdownOpenChangeDetails) =&gt; void)">
 
 </ParamField>
 
