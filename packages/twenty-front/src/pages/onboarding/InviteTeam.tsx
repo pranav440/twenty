@@ -24,6 +24,7 @@ import { useLingui } from '@lingui/react/macro';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef } from 'react';
 import { Controller, useWatch } from 'react-hook-form';
+import { isNonEmptyString } from '@sniptt/guards';
 import { isDefined, isNonEmptyArray } from 'twenty-shared/utils';
 import { MainButton } from 'twenty-ui/components';
 import { IconX } from 'twenty-ui/icon';
@@ -65,10 +66,16 @@ export const InviteTeam = () => {
   const { openDialog } = useDialog();
   const currentWorkspaceMember = useAtomStateValue(currentWorkspaceMemberState);
   const emails = useWatch({ control, name: 'emails' });
-  const firstEmailInputRef = useRef<HTMLInputElement>(null);
+  const emailInputToFocusRef = useRef<HTMLInputElement>(null);
 
   const inviteEmails = getValidInviteEmails(emails.map(({ email }) => email));
   const hasInviteEmails = isNonEmptyArray(inviteEmails);
+  const firstInvalidEmailIndex = emails.findIndex(
+    ({ email }) =>
+      isNonEmptyString(email) &&
+      !isNonEmptyArray(getValidInviteEmails([email])),
+  );
+  const emailIndexToFocus = Math.max(firstInvalidEmailIndex, 0);
   const onboardingConfig = useAtomStateValue(onboardingConfigState);
   const inviteTeamMaxInvites = onboardingConfig?.inviteTeamMaxInvites ?? 0;
   const inviteTeamCreditsRewardPerUser =
@@ -116,7 +123,11 @@ export const InviteTeam = () => {
                     fieldState: { error },
                   }) => (
                     <TextInput
-                      ref={index === 0 ? firstEmailInputRef : undefined}
+                      ref={
+                        index === emailIndexToFocus
+                          ? emailInputToFocusRef
+                          : undefined
+                      }
                       autoFocus={index === 0}
                       type="email"
                       value={value}
@@ -201,7 +212,7 @@ export const InviteTeam = () => {
           hasInviteEmails ? undefined : t`All it takes is their email.`
         }
         actions={[
-          hasInviteEmails
+          hasInviteEmails && isValid
             ? {
                 label: plural(inviteEmails.length, {
                   one: 'Send invite',
@@ -213,7 +224,7 @@ export const InviteTeam = () => {
         ]}
         rewardCredits={rewardCredits}
         isRewardPerItem={!hasInviteEmails}
-        finalFocus={firstEmailInputRef}
+        finalFocus={emailInputToFocusRef}
         onSkip={() => void handleSkip()}
       />
     </StyledOnboardingStepPage>
