@@ -200,6 +200,8 @@ export const useInviteTeam = () => {
         const sentInvitationsCount =
           result.data?.sendInvitations.result.length ?? 0;
 
+        setInviteTeamDraftCredits(sentInvitationsCount);
+
         if (emails.length > 0) {
           enqueueToast({
             variant: 'success',

@@ -1,5 +1,4 @@
 import { currentUserState } from '@/auth/states/currentUserState';
-import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
 import { currentWorkspaceMembersState } from '@/auth/states/currentWorkspaceMembersState';
 import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
@@ -12,6 +11,7 @@ import { StyledOnboardingStepPage } from '@/onboarding/components/StyledOnboardi
 import { StyledOnboardingStepSubtitle } from '@/onboarding/components/StyledOnboardingStepSubtitle';
 import { StyledOnboardingStepTitle } from '@/onboarding/components/StyledOnboardingStepTitle';
 import { ONBOARDING_CONTENT_BLOCK_WIDTH } from '@/onboarding/constants/OnboardingContentBlockWidth';
+import { useIsFirstWorkspaceMember } from '@/onboarding/hooks/useIsFirstWorkspaceMember';
 import { usePrefetchInviteSuggestions } from '@/onboarding/hooks/usePrefetchInviteSuggestions';
 import { useSetNextOnboardingStatus } from '@/onboarding/hooks/useSetNextOnboardingStatus';
 import { onboardingDraftCreditsState } from '@/onboarding/states/onboardingDraftCreditsState';
@@ -84,11 +84,10 @@ type Form = z.infer<typeof validationSchema>;
 export const CreateProfile = () => {
   const { t } = useLingui();
   const onboardingConfig = useAtomStateValue(onboardingConfigState);
-  const currentWorkspace = useAtomStateValue(currentWorkspaceState);
-  const creditsReward =
-    currentWorkspace?.workspaceMembersCount === 1
-      ? onboardingConfig?.createProfileCreditsReward
-      : undefined;
+  const isFirstWorkspaceMember = useIsFirstWorkspaceMember();
+  const creditsReward = isFirstWorkspaceMember
+    ? onboardingConfig?.createProfileCreditsReward
+    : undefined;
   const setNextOnboardingStatus = useSetNextOnboardingStatus();
 
   usePrefetchInviteSuggestions();

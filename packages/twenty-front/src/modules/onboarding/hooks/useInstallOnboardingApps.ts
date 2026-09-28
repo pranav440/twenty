@@ -1,5 +1,5 @@
-import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
+import { useIsFirstWorkspaceMember } from '@/onboarding/hooks/useIsFirstWorkspaceMember';
 import { useTriggerInstallAppsOnboardingStep } from '@/onboarding/hooks/useTriggerInstallAppsOnboardingStep';
 import { onboardingDraftCreditsState } from '@/onboarding/states/onboardingDraftCreditsState';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
@@ -20,11 +20,10 @@ export const useInstallOnboardingApps = (
   const setOnboardingDraftCredits = useSetAtomState(
     onboardingDraftCreditsState,
   );
-  const currentWorkspace = useAtomStateValue(currentWorkspaceState);
-  const rewardCredits =
-    currentWorkspace?.workspaceMembersCount === 1
-      ? (onboardingConfig?.installAppsCreditsReward ?? 0)
-      : 0;
+  const isFirstWorkspaceMember = useIsFirstWorkspaceMember();
+  const rewardCredits = isFirstWorkspaceMember
+    ? (onboardingConfig?.installAppsCreditsReward ?? 0)
+    : 0;
 
   const selectedUniversalIdentifiers = availableUniversalIdentifiers.filter(
     (universalIdentifier) =>
