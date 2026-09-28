@@ -19,14 +19,12 @@ export const useOnboardingCreditsLoss = () => {
     [setOnboardingCreditsLoss],
   );
 
-  const clearCreditsLoss = useCallback(
-    () =>
-      setOnboardingCreditsLoss((creditsLoss) => ({
-        ...creditsLoss,
-        credits: 0,
-      })),
-    [setOnboardingCreditsLoss],
-  );
+  const clearCreditsLoss = useCallback(() => {
+    setOnboardingCreditsLoss((creditsLoss) => ({
+      ...creditsLoss,
+      credits: 0,
+    }));
+  }, [setOnboardingCreditsLoss]);
 
   return { recordCreditsLoss, clearCreditsLoss };
 };
