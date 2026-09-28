@@ -30,9 +30,13 @@ const ONBOARDING_STATUS_BY_CREDITS_STEP: Record<
   upgradeTrial: OnboardingStatus.PLAN_REQUIRED,
 };
 
-const ONBOARDING_CREDITS_STEPS = Object.keys(
-  ONBOARDING_STATUS_BY_CREDITS_STEP,
-) as OnboardingCreditsStep[];
+const ONBOARDING_CREDITS_STEPS: OnboardingCreditsStep[] = [
+  'importContacts',
+  'installApps',
+  'createProfile',
+  'inviteTeam',
+  'upgradeTrial',
+];
 
 type GetOnboardingCreditsProgressArgs = {
   creditRewards: Omit<OnboardingCreditRewards, '__typename'>;

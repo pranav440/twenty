@@ -46,6 +46,10 @@ export const useOnboardingFreeCreditsChangeAnimation = ({
   const play = useEffectEvent(async (isCancelled: () => boolean) => {
     const element = scope.current;
 
+    if (!isDefined(element)) {
+      return;
+    }
+
     await Promise.all([
       animateOpacity(element, 1, { duration: FADE_IN_DURATION_S, delay }),
       animate(
