@@ -1,4 +1,3 @@
-import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { clientConfigApiStatusState } from '@/client-config/states/clientConfigApiStatusState';
 import { isGoogleCalendarEnabledState } from '@/client-config/states/isGoogleCalendarEnabledState';
 import { isGoogleMessagingEnabledState } from '@/client-config/states/isGoogleMessagingEnabledState';
@@ -10,6 +9,7 @@ import { OnboardingSkipDialogAvatars } from '@/onboarding/components/OnboardingS
 import { ONBOARDING_NETWORK_PREVIEW_PEOPLE } from '@/onboarding/constants/OnboardingNetworkPreviewPeople';
 import { ONBOARDING_SKIP_DIALOG_IDS } from '@/onboarding/constants/OnboardingSkipDialogIds';
 import { SyncEmailsAutoSkipEffect } from '@/onboarding/effect-components/SyncEmailsAutoSkipEffect';
+import { useIsFirstWorkspaceMember } from '@/onboarding/hooks/useIsFirstWorkspaceMember';
 import { useOnboardingStepEnterHotkey } from '@/onboarding/hooks/useOnboardingStepEnterHotkey';
 import { useSkipSyncEmailOnboardingStep } from '@/onboarding/hooks/useSkipSyncEmailOnboardingStep';
 import { useTriggerApisOAuth } from '@/settings/accounts/hooks/useTriggerApiOAuth';
@@ -30,11 +30,10 @@ export const SyncEmails = () => {
   const { t } = useLingui();
   const { openDialog } = useDialog();
   const onboardingConfig = useAtomStateValue(onboardingConfigState);
-  const currentWorkspace = useAtomStateValue(currentWorkspaceState);
-  const importContactsCreditsReward =
-    currentWorkspace?.workspaceMembersCount === 1
-      ? (onboardingConfig?.importContactsCreditsReward ?? 0)
-      : 0;
+  const isFirstWorkspaceMember = useIsFirstWorkspaceMember();
+  const importContactsCreditsReward = isFirstWorkspaceMember
+    ? (onboardingConfig?.importContactsCreditsReward ?? 0)
+    : 0;
   const { triggerApisOAuth } = useTriggerApisOAuth();
   const skipSyncEmailOnboardingStep = useSkipSyncEmailOnboardingStep();
   const [hasAutoSkipFailed, setHasAutoSkipFailed] = useState(false);
