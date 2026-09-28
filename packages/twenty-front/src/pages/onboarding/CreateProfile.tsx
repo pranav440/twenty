@@ -1,7 +1,10 @@
 import { currentUserState } from '@/auth/states/currentUserState';
+import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
 import { currentWorkspaceMembersState } from '@/auth/states/currentWorkspaceMembersState';
+import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
 import { getToastOptionsFromError } from '@/error-handler/utils/getToastOptionsFromError';
+import { OnboardingRewardCreditsChip } from '@/onboarding/components/OnboardingRewardCreditsChip';
 import { OnboardingProfilePictureUploader } from '@/onboarding/components/OnboardingProfilePictureUploader';
 import { OnboardingStepAnimatedItem } from '@/onboarding/components/OnboardingStepAnimatedItem';
 import { StyledOnboardingStepHeading } from '@/onboarding/components/StyledOnboardingStepHeading';
@@ -11,6 +14,7 @@ import { StyledOnboardingStepTitle } from '@/onboarding/components/StyledOnboard
 import { ONBOARDING_CONTENT_BLOCK_WIDTH } from '@/onboarding/constants/OnboardingContentBlockWidth';
 import { usePrefetchInviteSuggestions } from '@/onboarding/hooks/usePrefetchInviteSuggestions';
 import { useSetNextOnboardingStatus } from '@/onboarding/hooks/useSetNextOnboardingStatus';
+import { onboardingDraftCreditsState } from '@/onboarding/states/onboardingDraftCreditsState';
 import { useUpdateWorkspaceMemberSettings } from '@/settings/profile/hooks/useUpdateWorkspaceMemberSettings';
 import { PageFocusId } from '@/types/PageFocusId';
 import { TextInput } from '@/ui/input/components/TextInput';
@@ -22,7 +26,7 @@ import { styled } from '@linaria/react';
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form';
 import { Key } from 'ts-key-enum';
 import { isDefined } from 'twenty-shared/utils';
@@ -79,6 +83,12 @@ type Form = z.infer<typeof validationSchema>;
 
 export const CreateProfile = () => {
   const { t } = useLingui();
+  const onboardingConfig = useAtomStateValue(onboardingConfigState);
+  const currentWorkspace = useAtomStateValue(currentWorkspaceState);
+  const creditsReward =
+    currentWorkspace?.workspaceMembersCount === 1
+      ? onboardingConfig?.createProfileCreditsReward
+      : undefined;
   const setNextOnboardingStatus = useSetNextOnboardingStatus();
 
   usePrefetchInviteSuggestions();
@@ -106,6 +116,17 @@ export const CreateProfile = () => {
     },
     resolver: zodResolver(validationSchema),
   });
+
+  const setOnboardingDraftCredits = useSetAtomState(
+    onboardingDraftCreditsState,
+  );
+
+  useEffect(() => {
+    setOnboardingDraftCredits((draftCredits) => ({
+      ...draftCredits,
+      createProfile: isValid ? (creditsReward ?? 0) : 0,
+    }));
+  }, [isValid, creditsReward, setOnboardingDraftCredits]);
 
   const onSubmit: SubmitHandler<Form> = useCallback(
     async (data) => {
@@ -286,7 +307,14 @@ export const CreateProfile = () => {
             onClick={handleSubmit(onSubmit)}
             disabled={!isValid || isSubmitting || isNavigating}
             fullWidth
-          >{t`Continue`}</MainButton>
+            endIcon={
+              isDefined(creditsReward) && creditsReward > 0 ? (
+                <OnboardingRewardCreditsChip rewardCredits={creditsReward} />
+              ) : undefined
+            }
+          >
+            {t`Continue`}
+          </MainButton>
         </StyledButtonContainer>
       </OnboardingStepAnimatedItem>
     </StyledOnboardingStepPage>

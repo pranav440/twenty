@@ -1,8 +1,10 @@
 import { type OnboardingConfig } from '@/client-config/types/OnboardingConfig';
 import { useNumberFormat } from '@/localization/hooks/useNumberFormat';
+import { onboardingInviteTeamHasTypedEmailState } from '@/onboarding/states/onboardingInviteTeamHasTypedEmailState';
 import { type OnboardingCreditsStep } from '@/onboarding/types/OnboardingCreditsStep';
 import { type OnboardingFreeCreditsTooltipContent } from '@/onboarding/types/OnboardingFreeCreditsTooltipContent';
 import { getOnboardingCreditWorth } from '@/onboarding/utils/getOnboardingCreditWorth';
+import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
@@ -22,6 +24,9 @@ export const useOnboardingFreeCreditsTooltipContent = ({
 }: UseOnboardingFreeCreditsTooltipContentArgs): OnboardingFreeCreditsTooltipContent | null => {
   const { t } = useLingui();
   const { formatNumber } = useNumberFormat();
+  const onboardingInviteTeamHasTypedEmail = useAtomStateValue(
+    onboardingInviteTeamHasTypedEmailState,
+  );
 
   const {
     aiActions: importContactsAiActions,
@@ -60,13 +65,15 @@ export const useOnboardingFreeCreditsTooltipContent = ({
       description: t`Apps like enrichment and call recording run on credits.`,
     },
     createProfile: null,
-    inviteTeam: {
-      title: plural(onboardingConfig.inviteTeamCreditsRewardPerUser, {
-        one: 'Earn # free credit per teammate who joins',
-        other: 'Earn # free credits per teammate who joins',
-      }),
-      description: t`Credits are added when they accept your invite.`,
-    },
+    inviteTeam: onboardingInviteTeamHasTypedEmail
+      ? null
+      : {
+          title: plural(onboardingConfig.inviteTeamCreditsRewardPerUser, {
+            one: 'Earn # free credit per teammate who joins',
+            other: 'Earn # free credits per teammate who joins',
+          }),
+          description: t`Credits are added when they accept your invite.`,
+        },
     upgradeTrial: {
       title: plural(onboardingConfig.upgradeCreditsReward, {
         one: 'Upgrade your trial to earn # free credit',

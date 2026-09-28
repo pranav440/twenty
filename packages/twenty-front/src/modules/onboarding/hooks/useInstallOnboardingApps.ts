@@ -1,19 +1,49 @@
+import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
+import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
 import { useTriggerInstallAppsOnboardingStep } from '@/onboarding/hooks/useTriggerInstallAppsOnboardingStep';
+import { onboardingDraftCreditsState } from '@/onboarding/states/onboardingDraftCreditsState';
+import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
 import { useState } from 'react';
+import { isNonEmptyArray } from 'twenty-shared/utils';
 
-export const useInstallOnboardingApps = () => {
+export const useInstallOnboardingApps = (
+  availableUniversalIdentifiers: string[],
+) => {
   const triggerInstallAppsOnboardingStep =
     useTriggerInstallAppsOnboardingStep();
 
-  const [selectedUniversalIdentifiers, setSelectedUniversalIdentifiers] =
+  const [deselectedUniversalIdentifiers, setDeselectedUniversalIdentifiers] =
     useState<string[]>([]);
   const [isCompleting, setIsCompleting] = useState(false);
+  const onboardingConfig = useAtomStateValue(onboardingConfigState);
+  const setOnboardingDraftCredits = useSetAtomState(
+    onboardingDraftCreditsState,
+  );
+  const currentWorkspace = useAtomStateValue(currentWorkspaceState);
+  const rewardCredits =
+    currentWorkspace?.workspaceMembersCount === 1
+      ? (onboardingConfig?.installAppsCreditsReward ?? 0)
+      : 0;
+
+  const selectedUniversalIdentifiers = availableUniversalIdentifiers.filter(
+    (universalIdentifier) =>
+      !deselectedUniversalIdentifiers.includes(universalIdentifier),
+  );
+
+  const setInstallAppsDraftCredits = (credits: number) =>
+    setOnboardingDraftCredits((draftCredits) => ({
+      ...draftCredits,
+      installApps: credits,
+    }));
 
   const toggleApp = (universalIdentifier: string) => {
-    setSelectedUniversalIdentifiers((current) =>
-      current.includes(universalIdentifier)
-        ? current.filter((identifier) => identifier !== universalIdentifier)
-        : [...current, universalIdentifier],
+    setDeselectedUniversalIdentifiers((currentDeselected) =>
+      currentDeselected.includes(universalIdentifier)
+        ? currentDeselected.filter(
+            (identifier) => identifier !== universalIdentifier,
+          )
+        : [...currentDeselected, universalIdentifier],
     );
   };
 
@@ -22,6 +52,9 @@ export const useInstallOnboardingApps = () => {
       return;
     }
     setIsCompleting(true);
+    setInstallAppsDraftCredits(
+      isNonEmptyArray(universalIdentifiers) ? rewardCredits : 0,
+    );
 
     try {
       await triggerInstallAppsOnboardingStep({
@@ -29,6 +62,7 @@ export const useInstallOnboardingApps = () => {
         isAutoSkipped: false,
       });
     } catch {
+      setInstallAppsDraftCredits(0);
       setIsCompleting(false);
     }
   };
@@ -36,6 +70,7 @@ export const useInstallOnboardingApps = () => {
   return {
     selectedUniversalIdentifiers,
     isCompleting,
+    rewardCredits,
     toggleApp,
     installSelectedAppsAndContinue: () =>
       triggerStep(selectedUniversalIdentifiers),

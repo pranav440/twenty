@@ -1,12 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
-import { Provider as JotaiProvider } from 'jotai';
-import { createElement } from 'react';
 
 import { useInstallOnboardingApps } from '@/onboarding/hooks/useInstallOnboardingApps';
-import {
-  jotaiStore,
-  resetJotaiStore,
-} from '@/ui/utilities/state/jotai/jotaiStore';
 
 const mockTriggerInstallAppsOnboardingStep = jest.fn();
 
@@ -15,43 +9,47 @@ jest.mock('@/onboarding/hooks/useTriggerInstallAppsOnboardingStep', () => ({
     mockTriggerInstallAppsOnboardingStep,
 }));
 
-const Wrapper = ({ children }: { children: React.ReactNode }) =>
-  createElement(JotaiProvider, { store: jotaiStore }, children);
-
-const renderInstallHook = () => {
-  const { result } = renderHook(
-    () => ({ installOnboardingApps: useInstallOnboardingApps() }),
-    { wrapper: Wrapper },
-  );
-
-  return result;
-};
+const AVAILABLE_APPS = ['app-1', 'app-2'];
 
 describe('useInstallOnboardingApps', () => {
   beforeEach(() => {
-    localStorage.clear();
-    resetJotaiStore();
     mockTriggerInstallAppsOnboardingStep.mockReset();
   });
 
-  it('should install the selected apps once the step succeeds', async () => {
+  it('should install every available app by default', async () => {
     mockTriggerInstallAppsOnboardingStep.mockResolvedValue(undefined);
 
-    const result = renderInstallHook();
-
-    act(() => {
-      result.current.installOnboardingApps.toggleApp('app-1');
-    });
-    act(() => {
-      result.current.installOnboardingApps.toggleApp('app-2');
-    });
+    const { result } = renderHook(() =>
+      useInstallOnboardingApps(AVAILABLE_APPS),
+    );
 
     await act(async () => {
-      await result.current.installOnboardingApps.installSelectedAppsAndContinue();
+      await result.current.installSelectedAppsAndContinue();
     });
 
     expect(mockTriggerInstallAppsOnboardingStep).toHaveBeenCalledWith({
       universalIdentifiers: ['app-1', 'app-2'],
+      isAutoSkipped: false,
+    });
+  });
+
+  it('should leave out the apps turned off', async () => {
+    mockTriggerInstallAppsOnboardingStep.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() =>
+      useInstallOnboardingApps(AVAILABLE_APPS),
+    );
+
+    act(() => {
+      result.current.toggleApp('app-1');
+    });
+
+    await act(async () => {
+      await result.current.installSelectedAppsAndContinue();
+    });
+
+    expect(mockTriggerInstallAppsOnboardingStep).toHaveBeenCalledWith({
+      universalIdentifiers: ['app-2'],
       isAutoSkipped: false,
     });
   });
@@ -61,17 +59,15 @@ describe('useInstallOnboardingApps', () => {
       new Error('network error'),
     );
 
-    const result = renderInstallHook();
-
-    act(() => {
-      result.current.installOnboardingApps.toggleApp('app-1');
-    });
+    const { result } = renderHook(() =>
+      useInstallOnboardingApps(AVAILABLE_APPS),
+    );
 
     await act(async () => {
-      await result.current.installOnboardingApps.installSelectedAppsAndContinue();
+      await result.current.installSelectedAppsAndContinue();
     });
 
-    expect(result.current.installOnboardingApps.isCompleting).toBe(false);
+    expect(result.current.isCompleting).toBe(false);
   });
 
   it('should allow retrying after a failed attempt', async () => {
@@ -79,18 +75,16 @@ describe('useInstallOnboardingApps', () => {
       .mockRejectedValueOnce(new Error('network error'))
       .mockResolvedValueOnce(undefined);
 
-    const result = renderInstallHook();
+    const { result } = renderHook(() =>
+      useInstallOnboardingApps(AVAILABLE_APPS),
+    );
 
-    act(() => {
-      result.current.installOnboardingApps.toggleApp('app-1');
+    await act(async () => {
+      await result.current.installSelectedAppsAndContinue();
     });
 
     await act(async () => {
-      await result.current.installOnboardingApps.installSelectedAppsAndContinue();
-    });
-
-    await act(async () => {
-      await result.current.installOnboardingApps.installSelectedAppsAndContinue();
+      await result.current.installSelectedAppsAndContinue();
     });
 
     expect(mockTriggerInstallAppsOnboardingStep).toHaveBeenCalledTimes(2);
@@ -105,20 +99,18 @@ describe('useInstallOnboardingApps', () => {
       }),
     );
 
-    const result = renderInstallHook();
+    const { result } = renderHook(() =>
+      useInstallOnboardingApps(AVAILABLE_APPS),
+    );
 
     act(() => {
-      result.current.installOnboardingApps.toggleApp('app-1');
+      void result.current.installSelectedAppsAndContinue();
     });
 
-    act(() => {
-      void result.current.installOnboardingApps.installSelectedAppsAndContinue();
-    });
-
-    expect(result.current.installOnboardingApps.isCompleting).toBe(true);
+    expect(result.current.isCompleting).toBe(true);
 
     act(() => {
-      void result.current.installOnboardingApps.skip();
+      void result.current.skip();
     });
 
     expect(mockTriggerInstallAppsOnboardingStep).toHaveBeenCalledTimes(1);

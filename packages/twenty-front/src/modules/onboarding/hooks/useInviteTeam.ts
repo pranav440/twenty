@@ -1,9 +1,16 @@
 import { isBookCallOnboardingStepEnabledState } from '@/client-config/states/isBookCallOnboardingStepEnabledState';
 import { isCompanyEnrichmentEnabledState } from '@/client-config/states/isCompanyEnrichmentEnabledState';
+import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
+import { onboardingDraftCreditsState } from '@/onboarding/states/onboardingDraftCreditsState';
+import { onboardingInviteTeamEmailsDraftState } from '@/onboarding/states/onboardingInviteTeamEmailsDraftState';
+import { onboardingInviteTeamHasTypedEmailState } from '@/onboarding/states/onboardingInviteTeamHasTypedEmailState';
+import { useOnboardingStepEnterHotkey } from '@/onboarding/hooks/useOnboardingStepEnterHotkey';
 import { useSetNextOnboardingStatus } from '@/onboarding/hooks/useSetNextOnboardingStatus';
+import { getValidInviteEmails } from '@/onboarding/utils/getValidInviteEmails';
 import { waitForCompanyEnrichmentSettlement } from '@/onboarding/utils/waitForCompanyEnrichmentSettlement';
+import { ONBOARDING_SKIP_DIALOG_IDS } from '@/onboarding/constants/OnboardingSkipDialogIds';
 import { PageFocusId } from '@/types/PageFocusId';
-import { useHotkeysOnFocusedElement } from '@/ui/utilities/hotkey/hooks/useHotkeysOnFocusedElement';
+import { useDialog } from '@/ui/layout/dialog/hooks/useDialog';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useCreateWorkspaceInvitation } from '@/workspace-invitation/hooks/useCreateWorkspaceInvitation';
 import { useQuery } from '@apollo/client/react';
@@ -12,8 +19,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useStore } from 'jotai';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
-import { Key } from 'ts-key-enum';
-import { isDefined } from 'twenty-shared/utils';
+import { isDefined, isNonEmptyArray } from 'twenty-shared/utils';
 import { useToast } from 'twenty-ui/components';
 import { z } from 'zod';
 import { GetInviteSuggestionsDocument } from '~/generated-metadata/graphql';
@@ -36,19 +42,38 @@ export const useInviteTeam = () => {
     isCompanyEnrichmentEnabledState,
   );
   const store = useStore();
+  const { openDialog } = useDialog();
 
   const [isNavigating, setIsNavigating] = useState(false);
+  const onboardingInviteTeamEmailsDraft = useAtomStateValue(
+    onboardingInviteTeamEmailsDraftState,
+  );
+
+  const setInviteTeamDraftCredits = useCallback(
+    (invitedTeammatesCount: number) =>
+      store.set(onboardingDraftCreditsState.atom, (draftCredits) => ({
+        ...draftCredits,
+        inviteTeam:
+          invitedTeammatesCount *
+          (store.get(onboardingConfigState.atom)
+            ?.inviteTeamCreditsRewardPerUser ?? 0),
+      })),
+    [store],
+  );
 
   const {
     control,
     handleSubmit,
     watch,
     reset,
+    getValues,
     formState: { isValid, isSubmitting, isDirty },
   } = useForm<InviteTeamFormInput>({
     mode: 'onChange',
     defaultValues: {
-      emails: [{ email: '' }, { email: '' }, { email: '' }],
+      emails: isDefined(onboardingInviteTeamEmailsDraft)
+        ? onboardingInviteTeamEmailsDraft.map((email) => ({ email }))
+        : [{ email: '' }, { email: '' }, { email: '' }],
     },
     resolver: zodResolver(validationSchema),
   });
@@ -58,7 +83,9 @@ export const useInviteTeam = () => {
     name: 'emails',
   });
 
-  const [hasPrefilledSuggestions, setHasPrefilledSuggestions] = useState(false);
+  const [hasPrefilledSuggestions, setHasPrefilledSuggestions] = useState(
+    isDefined(onboardingInviteTeamEmailsDraft),
+  );
 
   const { data: inviteSuggestionsData } = useQuery(
     GetInviteSuggestionsDocument,
@@ -94,11 +121,28 @@ export const useInviteTeam = () => {
   ]);
 
   useEffect(() => {
-    const subscription = watch(({ emails }) => {
+    const subscription = watch(({ emails }, { name, type }) => {
       if (!emails) {
         return;
       }
       const emailValues = emails.map((email) => email?.email);
+      const validEmailsCount = getValidInviteEmails(emailValues).length;
+
+      const changedEmailIndex = Number(
+        name?.match(/^emails\.(\d+)\.email$/)?.[1],
+      );
+      if (
+        type === 'change' &&
+        isNonEmptyArray(getValidInviteEmails([emailValues[changedEmailIndex]]))
+      ) {
+        store.set(onboardingInviteTeamHasTypedEmailState.atom, true);
+      }
+
+      setInviteTeamDraftCredits(validEmailsCount);
+      store.set(
+        onboardingInviteTeamEmailsDraftState.atom,
+        emailValues.map((email) => email ?? ''),
+      );
       if (emailValues[emailValues.length - 1] !== '') {
         append({ email: '' });
       }
@@ -111,7 +155,7 @@ export const useInviteTeam = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, append, remove]);
+  }, [watch, append, remove, setInviteTeamDraftCredits, store]);
 
   const getPlaceholder = (emailIndex: number) => {
     if (emailIndex === 0) {
@@ -136,6 +180,7 @@ export const useInviteTeam = () => {
         ),
       );
 
+      setInviteTeamDraftCredits(emails.length);
       setIsNavigating(true);
 
       try {
@@ -183,6 +228,7 @@ export const useInviteTeam = () => {
       isCompanyEnrichmentEnabled,
       sendInvitation,
       setNextOnboardingStatus,
+      setInviteTeamDraftCredits,
       store,
       t,
     ],
@@ -192,22 +238,30 @@ export const useInviteTeam = () => {
     await onSubmit({ emails: [] });
   };
 
-  useHotkeysOnFocusedElement({
-    keys: Key.Enter,
-    callback: () => {
-      handleSubmit(onSubmit)();
-    },
+  const handleInvite = () => {
+    const hasInviteEmails = isNonEmptyArray(
+      getValidInviteEmails(getValues('emails').map(({ email }) => email)),
+    );
+
+    if (!hasInviteEmails) {
+      openDialog(ONBOARDING_SKIP_DIALOG_IDS.inviteTeam);
+      return;
+    }
+
+    void handleSubmit(onSubmit)();
+  };
+
+  useOnboardingStepEnterHotkey({
     focusId: PageFocusId.InviteTeam,
-    dependencies: [handleSubmit, onSubmit],
+    onEnter: handleInvite,
   });
 
   return {
     control,
     fields,
     remove,
-    handleSubmit,
-    onSubmit,
     handleSkip,
+    handleInvite,
     getPlaceholder,
     isValid,
     isSubmitting,
