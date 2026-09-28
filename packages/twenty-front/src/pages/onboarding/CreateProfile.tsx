@@ -4,6 +4,7 @@ import { currentWorkspaceMembersState } from '@/auth/states/currentWorkspaceMemb
 import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
 import { getToastOptionsFromError } from '@/error-handler/utils/getToastOptionsFromError';
 import { OnboardingRewardCreditsChip } from '@/onboarding/components/OnboardingRewardCreditsChip';
+import { getOnboardingRewardCreditsAriaLabel } from '@/onboarding/utils/getOnboardingRewardCreditsAriaLabel';
 import { OnboardingProfilePictureUploader } from '@/onboarding/components/OnboardingProfilePictureUploader';
 import { OnboardingStepAnimatedItem } from '@/onboarding/components/OnboardingStepAnimatedItem';
 import { StyledOnboardingStepHeading } from '@/onboarding/components/StyledOnboardingStepHeading';
@@ -311,6 +312,10 @@ export const CreateProfile = () => {
                 <OnboardingRewardCreditsChip rewardCredits={creditsReward} />
               ) : undefined
             }
+            aria-label={getOnboardingRewardCreditsAriaLabel({
+              label: t`Continue`,
+              rewardCredits: creditsReward ?? 0,
+            })}
           >
             {t`Continue`}
           </MainButton>

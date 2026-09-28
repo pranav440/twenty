@@ -1,4 +1,5 @@
 import { OnboardingRewardCreditsChip } from '@/onboarding/components/OnboardingRewardCreditsChip';
+import { getOnboardingRewardCreditsAriaLabel } from '@/onboarding/utils/getOnboardingRewardCreditsAriaLabel';
 import { OnboardingSkipButton } from '@/onboarding/components/OnboardingSkipButton';
 import { OnboardingStepAnimatedItem } from '@/onboarding/components/OnboardingStepAnimatedItem';
 import { StyledOnboardingStepHeading } from '@/onboarding/components/StyledOnboardingStepHeading';
@@ -229,6 +230,10 @@ export const InstallAppsContent = ({
                     />
                   ) : undefined
                 }
+                aria-label={getOnboardingRewardCreditsAriaLabel({
+                  label: getInstallLabel(),
+                  rewardCredits: hasSelectedApps ? rewardCredits : 0,
+                })}
               >
                 {getInstallLabel()}
               </MainButton>

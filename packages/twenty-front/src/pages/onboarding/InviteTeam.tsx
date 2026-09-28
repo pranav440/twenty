@@ -1,6 +1,7 @@
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
 import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
 import { OnboardingRewardCreditsChip } from '@/onboarding/components/OnboardingRewardCreditsChip';
+import { getOnboardingRewardCreditsAriaLabel } from '@/onboarding/utils/getOnboardingRewardCreditsAriaLabel';
 import { OnboardingSkipButton } from '@/onboarding/components/OnboardingSkipButton';
 import { OnboardingSkipDialog } from '@/onboarding/components/OnboardingSkipDialog';
 import { OnboardingSkipDialogAvatars } from '@/onboarding/components/OnboardingSkipDialogAvatars';
@@ -165,6 +166,11 @@ export const InviteTeam = () => {
                 />
               ) : undefined
             }
+            aria-label={getOnboardingRewardCreditsAriaLabel({
+              label: t`Invite`,
+              rewardCredits,
+              isRewardPerItem: !hasInviteEmails,
+            })}
           >
             {t`Invite`}
           </MainButton>
