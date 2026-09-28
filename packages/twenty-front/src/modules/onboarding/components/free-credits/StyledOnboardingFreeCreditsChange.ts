@@ -6,4 +6,8 @@ export const StyledOnboardingFreeCreditsChange = styled.span`
   font-size: ${themeCssVariables.font.size.md};
   font-weight: ${themeCssVariables.font.weight.medium};
   opacity: 0;
+
+  &[data-lost='true'] {
+    color: ${themeCssVariables.font.color.tertiary};
+  }
 `;

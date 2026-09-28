@@ -7,8 +7,10 @@ import { StyledOnboardingFreeCreditsCount } from '@/onboarding/components/free-c
 import { StyledOnboardingFreeCreditsLabel } from '@/onboarding/components/free-credits/StyledOnboardingFreeCreditsLabel';
 import { StyledOnboardingFreeCreditsText } from '@/onboarding/components/free-credits/StyledOnboardingFreeCreditsText';
 import { ONBOARDING_SKIP_DIALOG_IDS } from '@/onboarding/constants/OnboardingSkipDialogIds';
+import { useOnboardingCreditsLoss } from '@/onboarding/hooks/useOnboardingCreditsLoss';
 import { useOnboardingFreeCreditsTooltipContent } from '@/onboarding/hooks/useOnboardingFreeCreditsTooltipContent';
 import { useOnboardingNewlyEarnedCredits } from '@/onboarding/hooks/useOnboardingNewlyEarnedCredits';
+import { onboardingCreditsLossState } from '@/onboarding/states/onboardingCreditsLossState';
 import { type OnboardingCreditsProgress } from '@/onboarding/types/OnboardingCreditsProgress';
 import { type OnboardingFreeCreditsTooltipContent } from '@/onboarding/types/OnboardingFreeCreditsTooltipContent';
 import { currentFocusIdSelector } from '@/ui/utilities/focus/states/currentFocusIdSelector';
@@ -156,6 +158,8 @@ export const OnboardingFreeCreditsPill = ({
   );
   const [displayedTooltipContent, setDisplayedTooltipContent] =
     useState<OnboardingFreeCreditsTooltipContent | null>(null);
+  const onboardingCreditsLoss = useAtomStateValue(onboardingCreditsLossState);
+  const { clearCreditsLoss } = useOnboardingCreditsLoss();
   const pillAnchorRef = useRef<HTMLDivElement>(null);
 
   const { earnedCredits, goalCredits, currentStep, currentStepCredits } =
@@ -175,6 +179,8 @@ export const OnboardingFreeCreditsPill = ({
   });
 
   const hasNewlyEarnedCredits = newlyEarnedCredits > 0;
+  const shouldShowLostCredits =
+    onboardingCreditsLoss.credits > 0 && !hasNewlyEarnedCredits;
 
   const formatCredits = (credits: number) =>
     formatNumber(credits, { decimals: 2 });
@@ -203,8 +209,20 @@ export const OnboardingFreeCreditsPill = ({
           <OnboardingFreeCreditsChange
             key={earnedCreditsWithoutTrial}
             label={`+${formatCredits(newlyEarnedCredits)}`}
+            isLost={false}
             delay={newlyEarnedCreditsDelay}
             onDisplayed={markCreditsAsSeen}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {shouldShowLostCredits && (
+          <OnboardingFreeCreditsChange
+            key={`lost-${onboardingCreditsLoss.lossCount}`}
+            label={`−${formatCredits(onboardingCreditsLoss.credits)}`}
+            isLost
+            delay={newlyEarnedCreditsDelay}
+            onDisplayed={clearCreditsLoss}
           />
         )}
       </AnimatePresence>

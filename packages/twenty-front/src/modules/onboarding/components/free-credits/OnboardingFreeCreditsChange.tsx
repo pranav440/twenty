@@ -3,19 +3,25 @@ import { useOnboardingFreeCreditsChangeAnimation } from '@/onboarding/hooks/useO
 
 type OnboardingFreeCreditsChangeProps = {
   label: string;
+  isLost: boolean;
   delay: number;
   onDisplayed: () => void;
 };
 
 export const OnboardingFreeCreditsChange = ({
   label,
+  isLost,
   delay,
   onDisplayed,
 }: OnboardingFreeCreditsChangeProps) => {
-  const scope = useOnboardingFreeCreditsChangeAnimation({ delay, onDisplayed });
+  const scope = useOnboardingFreeCreditsChangeAnimation({
+    isLost,
+    delay,
+    onDisplayed,
+  });
 
   return (
-    <StyledOnboardingFreeCreditsChange ref={scope}>
+    <StyledOnboardingFreeCreditsChange ref={scope} data-lost={isLost}>
       {label}
     </StyledOnboardingFreeCreditsChange>
   );

@@ -4,13 +4,16 @@ import { useEffect, useEffectEvent, useLayoutEffect } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 
 const FADE_IN_DURATION_S = 0.24;
+const LOST_CREDITS_DISPLAY_DURATION_S = 1.5;
 
 type UseOnboardingFreeCreditsChangeAnimationArgs = {
+  isLost: boolean;
   delay: number;
   onDisplayed: () => void;
 };
 
 export const useOnboardingFreeCreditsChangeAnimation = ({
+  isLost,
   delay,
   onDisplayed,
 }: UseOnboardingFreeCreditsChangeAnimationArgs) => {
@@ -69,7 +72,9 @@ export const useOnboardingFreeCreditsChangeAnimation = ({
     await new Promise((resolve) =>
       setTimeout(
         resolve,
-        (ONBOARDING_NEWLY_EARNED_CREDITS_DISPLAY_DURATION_S -
+        ((isLost
+          ? LOST_CREDITS_DISPLAY_DURATION_S
+          : ONBOARDING_NEWLY_EARNED_CREDITS_DISPLAY_DURATION_S) -
           FADE_IN_DURATION_S) *
           1000,
       ),
