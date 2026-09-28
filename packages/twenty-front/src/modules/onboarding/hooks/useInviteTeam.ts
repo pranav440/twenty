@@ -121,6 +121,11 @@ export const useInviteTeam = () => {
   ]);
 
   useEffect(() => {
+    setInviteTeamDraftCredits(
+      getValidInviteEmails(getValues('emails').map(({ email }) => email))
+        .length,
+    );
+
     const subscription = watch(({ emails }, { name, type }) => {
       if (!emails) {
         return;
@@ -155,7 +160,7 @@ export const useInviteTeam = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, append, remove, setInviteTeamDraftCredits, store]);
+  }, [watch, append, remove, getValues, setInviteTeamDraftCredits, store]);
 
   const getPlaceholder = (emailIndex: number) => {
     if (emailIndex === 0) {

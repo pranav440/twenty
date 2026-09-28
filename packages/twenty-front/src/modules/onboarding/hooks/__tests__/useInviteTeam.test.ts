@@ -7,7 +7,10 @@ import { dynamicActivate } from '~/utils/i18n/dynamicActivate';
 
 import { isBookCallOnboardingStepEnabledState } from '@/client-config/states/isBookCallOnboardingStepEnabledState';
 import { isCompanyEnrichmentEnabledState } from '@/client-config/states/isCompanyEnrichmentEnabledState';
+import { onboardingConfigState } from '@/client-config/states/onboardingConfigState';
 import { useInviteTeam } from '@/onboarding/hooks/useInviteTeam';
+import { onboardingDraftCreditsState } from '@/onboarding/states/onboardingDraftCreditsState';
+import { onboardingInviteTeamEmailsDraftState } from '@/onboarding/states/onboardingInviteTeamEmailsDraftState';
 import {
   jotaiStore,
   resetJotaiStore,
@@ -195,5 +198,25 @@ describe('useInviteTeam', () => {
 
     expect(result.current.isNavigating).toBe(false);
     expect(mockSetNextOnboardingStatus).not.toHaveBeenCalled();
+  });
+
+  it('should count the restored invite emails as soon as the step opens', () => {
+    jotaiStore.set(onboardingConfigState.atom, {
+      importContactsCreditsReward: 1,
+      inviteTeamCreditsRewardPerUser: 0.5,
+      installAppsCreditsReward: 0.5,
+      createProfileCreditsReward: 0.5,
+      upgradeCreditsReward: 2,
+      inviteTeamMaxInvites: 5,
+    });
+    jotaiStore.set(onboardingInviteTeamEmailsDraftState.atom, [
+      'grace@example.com',
+      'alan@example.com',
+      '',
+    ]);
+
+    renderInviteTeam();
+
+    expect(jotaiStore.get(onboardingDraftCreditsState.atom).inviteTeam).toBe(1);
   });
 });
