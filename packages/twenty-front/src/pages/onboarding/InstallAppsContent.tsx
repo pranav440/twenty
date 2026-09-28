@@ -138,17 +138,23 @@ export const InstallAppsContent = ({
   const hasSelectedApps = isNonEmptyArray(selectedUniversalIdentifiers);
   const selectedAppsCount = selectedUniversalIdentifiers.length;
 
-  const installLabel = !hasSelectedApps
-    ? t`Continue without apps`
-    : selectedAppsCount === apps.length
-      ? plural(selectedAppsCount, {
-          one: 'Install # app',
-          other: 'Install all # apps',
-        })
-      : plural(selectedAppsCount, {
-          one: 'Install # app',
-          other: 'Install # apps',
-        });
+  const getInstallLabel = () => {
+    if (!hasSelectedApps) {
+      return t`Continue without apps`;
+    }
+
+    if (selectedAppsCount === apps.length) {
+      return plural(selectedAppsCount, {
+        one: 'Install # app',
+        other: 'Install all # apps',
+      });
+    }
+
+    return plural(selectedAppsCount, {
+      one: 'Install # app',
+      other: 'Install # apps',
+    });
+  };
 
   return (
     <StyledOnboardingStepPage>
@@ -224,7 +230,7 @@ export const InstallAppsContent = ({
                   ) : undefined
                 }
               >
-                {installLabel}
+                {getInstallLabel()}
               </MainButton>
             </StyledInstallButton>
           )}
